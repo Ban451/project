@@ -1,57 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/hotel.dart';
-import '../services/auth_service.dart';
-import 'payment_screen.dart';
+import '../models/payment.dart';
 
-class BookingScreen extends StatefulWidget {
-  final Hotel hotel;
+class PaymentScreen extends StatefulWidget {
+  final double totalAmount;
+  final String hotelName;
+  final String bookingId;
 
-  const BookingScreen({super.key, required this.hotel});
+  const PaymentScreen({
+    super.key,
+    required this.totalAmount,
+    required this.hotelName,
+    required this.bookingId,
+  });
 
   @override
-  State<BookingScreen> createState() => _BookingScreenState();
+  State<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _BookingScreenState extends State<BookingScreen> {
-  final AuthService authService = AuthService();
-  
-  DateTime? _checkInDate;
-  DateTime? _checkOutDate;
-  int _guests = 2;
-  int _rooms = 1;
-  
+class _PaymentScreenState extends State<PaymentScreen> {
+  PaymentMethod? _selectedMethod;
+  bool _isProcessing = false;
+
   String formatRupiah(double amount) {
     return 'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (match) => '${match[1]}.')}';
   }
 
-  int _getNights() {
-    if (_checkInDate == null || _checkOutDate == null) return 1;
-    return _checkOutDate!.difference(_checkInDate!).inDays;
-  }
-
-  double _getTotalPrice() {
-    return widget.hotel.price * _getNights() * _rooms;
-  }
-
-  void _proceedToPayment() {
-    if (_checkInDate == null || _checkOutDate == null) {
+  void _processPayment() async {
+    if (_selectedMethod == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih tanggal check-in dan check-out terlebih dahulu')),
+        const SnackBar(content: Text('Pilih metode pembayaran terlebih dahulu')),
       );
       return;
     }
 
-    final bookingId = 'STV${DateTime.now().millisecondsSinceEpoch}';
-    
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentScreen(
-          totalAmount: _getTotalPrice(),
-          hotelName: widget.hotel.name,
-          bookingId: bookingId,
+    setState(() => _isProcessing = true);
+
+    // Simulasi proses pembayaran
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() => _isProcessing = false);
+
+    // Tampilkan dialog sukses
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle, color: Colors.green, size: 60),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Pembayaran Berhasil!',
+              style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Booking ID: ${widget.bookingId}',
+              style: GoogleFonts.poppins(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Detail pemesanan akan dikirim ke email Anda',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 14),
+            ),
+          ],
         ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Tutup dialog
+              Navigator.pop(context); // Kembali ke halaman booking
+              Navigator.pop(context); // Kembali ke home
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Kembali ke Beranda'),
+          ),
+        ],
       ),
     );
   }
@@ -59,27 +97,19 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.arrow_back, color: Color(0xFF1E3A8A), size: 20),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1E3A8A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Booking Hotel',
+          'Pembayaran',
           style: GoogleFonts.poppins(
             color: const Color(0xFF1E3A8A),
             fontWeight: FontWeight.w700,
-            fontSize: 20,
           ),
         ),
         centerTitle: true,
@@ -89,149 +119,80 @@ class _BookingScreenState extends State<BookingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hotel Info Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF2563EB), Color(0xFF1E3A8A)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(widget.hotel.images[0], style: const TextStyle(fontSize: 40)),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.hotel.name,
-                            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Text(
-                                widget.hotel.location,
-                                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              const Icon(Icons.star, size: 14, color: Colors.amber),
-                              const SizedBox(width: 4),
-                              Text(
-                                widget.hotel.rating.toString(),
-                                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+            // Ringkasan pembayaran
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2563EB), Color(0xFF1E3A8A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total Pembayaran',
+                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    formatRupiah(widget.totalAmount),
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.hotelName,
+                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             Text(
-              'Pilih Tanggal',
+              'Pilih Metode Pembayaran',
               style: GoogleFonts.poppins(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1E3A8A),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            Row(
-              children: [
-                Expanded(child: _buildDateCard(label: 'Check In', date: _checkInDate, isCheckIn: true)),
-                const SizedBox(width: 12),
-                Expanded(child: _buildDateCard(label: 'Check Out', date: _checkOutDate, isCheckIn: false)),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            Text(
-              'Detail Tamu',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1E3A8A),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            _buildCounterRow(
-              label: 'Jumlah Tamu',
-              icon: Icons.people,
-              value: _guests,
-              onIncrement: () => setState(() => _guests++),
-              onDecrement: () => setState(() { if (_guests > 1) _guests--; }),
-            ),
-            const SizedBox(height: 12),
-            _buildCounterRow(
-              label: 'Jumlah Kamar',
-              icon: Icons.king_bed,
-              value: _rooms,
-              onIncrement: () => setState(() => _rooms++),
-              onDecrement: () => setState(() { if (_rooms > 1) _rooms--; }),
-            ),
-
-            const SizedBox(height: 20),
-
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildPriceRow('Harga per malam', formatRupiah(widget.hotel.price)),
-                    const Divider(height: 24),
-                    _buildPriceRow('Jumlah Malam', '${_getNights()} malam'),
-                    const Divider(height: 24),
-                    _buildPriceRow('Total Harga', formatRupiah(_getTotalPrice()), isTotal: true),
-                  ],
-                ),
-              ),
-            ),
+            // Daftar metode pembayaran
+            ...PaymentMethodData.methods.map((method) => _buildPaymentMethodCard(method)),
 
             const SizedBox(height: 30),
 
+            // Tombol Bayar
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: _proceedToPayment,
+                onPressed: _isProcessing ? null : _processPayment,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 ),
-                child: Text(
-                  'Lanjut ke Pembayaran',
-                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
+                child: _isProcessing
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : Text(
+                        'Bayar Sekarang',
+                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
               ),
             ),
           ],
@@ -240,126 +201,65 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  Widget _buildDateCard({required String label, required DateTime? date, required bool isCheckIn}) {
+  Widget _buildPaymentMethodCard(PaymentMethodData method) {
+    final isSelected = _selectedMethod == method.method;
     return GestureDetector(
-      onTap: () => _selectDate(isCheckIn),
+      onTap: () => setState(() => _selectedMethod = method.method),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF2563EB) : Colors.grey[200]!,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: Column(
+        child: Row(
           children: [
-            Icon(isCheckIn ? Icons.login : Icons.logout, color: const Color(0xFF2563EB), size: 20),
-            const SizedBox(height: 8),
-            Text(label, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
-            const SizedBox(height: 4),
-            Text(
-              date != null ? '${date.day}/${date.month}/${date.year}' : 'Pilih Tanggal',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: date != null ? const Color(0xFF1E3A8A) : Colors.grey,
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(method.icon, style: const TextStyle(fontSize: 28)),
               ),
             ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    method.name,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    method.description,
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              const Icon(Icons.check_circle, color: Color(0xFF2563EB), size: 24),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildCounterRow({
-    required String label,
-    required IconData icon,
-    required int value,
-    required VoidCallback onIncrement,
-    required VoidCallback onDecrement,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF2563EB), size: 20),
-          const SizedBox(width: 12),
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[800])),
-          const Spacer(),
-          IconButton(
-            onPressed: onDecrement,
-            icon: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: Colors.grey[200], shape: BoxShape.circle),
-              child: const Icon(Icons.remove, size: 16),
-            ),
-          ),
-          Container(width: 40, alignment: Alignment.center, child: Text(value.toString())),
-          IconButton(
-            onPressed: onIncrement,
-            icon: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: const Color(0xFF2563EB).withOpacity(0.1), shape: BoxShape.circle),
-              child: const Icon(Icons.add, size: 16, color: Color(0xFF2563EB)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPriceRow(String label, String value, {bool isTotal = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: isTotal ? 16 : 14,
-            fontWeight: isTotal ? FontWeight.w600 : FontWeight.normal,
-            color: isTotal ? const Color(0xFF1E3A8A) : Colors.grey[700],
-          ),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.poppins(
-            fontSize: isTotal ? 18 : 14,
-            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
-            color: isTotal ? const Color(0xFF2563EB) : Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _selectDate(bool isCheckIn) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isCheckIn) {
-          _checkInDate = picked;
-          if (_checkOutDate != null && _checkOutDate!.isBefore(_checkInDate!)) {
-            _checkOutDate = null;
-          }
-        } else {
-          if (_checkInDate != null && picked.isBefore(_checkInDate!)) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Check out harus setelah check in'), backgroundColor: Colors.red),
-            );
-          } else {
-            _checkOutDate = picked;
-          }
-        }
-      });
-    }
   }
 }
