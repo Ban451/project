@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'register_screen.dart';
 import 'admin_login_screen.dart';
-import 'home_screen.dart';  // TAMBAHKAN import home_screen
+import '../services/auth_service.dart';
+import 'user/user_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen>
   
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -43,25 +45,27 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  // Fungsi untuk validasi login
   void _handleLogin() {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showSnackbar('Email dan password harus diisi');
+      _showSnackbar('Email dan password harus diisi', Colors.red);
       return;
     }
     
-    // Validasi sederhana (contoh: email dan password tidak boleh kosong)
-    // Di sini Anda bisa menambahkan validasi ke backend nantinya
+    String name = _emailController.text.split('@')[0];
     
-    _showSnackbar('Login berhasil');
+    _authService.loginAsUser(
+      name: name,
+      email: _emailController.text,
+    );
     
-    // Delay sebentar agar snackbar terlihat, lalu pindah ke home screen
+    _showSnackbar('Login berhasil', Colors.green);
+    
     Future.delayed(const Duration(milliseconds: 500), () {
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => 
-              const HomeScreen(),
+              const UserHomeScreen(),
           transitionsBuilder: (
               context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
@@ -107,7 +111,6 @@ class _LoginScreenState extends State<LoginScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Welcome back text
                 Text(
                   'Welcome Back!',
                   style: GoogleFonts.poppins(
@@ -127,7 +130,6 @@ class _LoginScreenState extends State<LoginScreen>
                 
                 const SizedBox(height: 40),
                 
-                // Email field
                 _buildTextField(
                   label: 'Email',
                   hint: 'masukan email',
@@ -136,7 +138,6 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 const SizedBox(height: 20),
                 
-                // Password field
                 _buildTextField(
                   label: 'Password',
                   hint: 'masukan password',
@@ -147,10 +148,9 @@ class _LoginScreenState extends State<LoginScreen>
                 
                 const SizedBox(height: 30),
                 
-                // Login button
                 Center(
                   child: GestureDetector(
-                    onTap: _handleLogin,  // Gunakan fungsi _handleLogin
+                    onTap: _handleLogin,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       curve: Curves.easeInOut,
@@ -188,7 +188,6 @@ class _LoginScreenState extends State<LoginScreen>
                 
                 const SizedBox(height: 30),
                 
-                // Register link (di tengah)
                 Center(
                   child: GestureDetector(
                     onTap: () {
@@ -219,7 +218,6 @@ class _LoginScreenState extends State<LoginScreen>
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF2563EB),
                               decoration: TextDecoration.underline,
-                              decorationColor: const Color(0xFF2563EB),
                             ),
                           ),
                         ],
@@ -230,7 +228,6 @@ class _LoginScreenState extends State<LoginScreen>
                 
                 const SizedBox(height: 16),
                 
-                // Admin login link (di tengah, di bawah register)
                 Center(
                   child: GestureDetector(
                     onTap: () {
@@ -277,8 +274,6 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -339,13 +334,14 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  void _showSnackbar(String message) {
+  void _showSnackbar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
           style: GoogleFonts.poppins(),
         ),
+        backgroundColor: color,
         duration: const Duration(milliseconds: 500),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
