@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'login_screen.dart';
 import '../services/auth_service.dart';
 import 'guest/guest_home_screen.dart';
-import 'user/user_home_screen.dart';
+// HAPUS import yang tidak digunakan
+// import 'user/user_home_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -23,9 +24,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         MaterialPageRoute(builder: (_) => const GuestHomeScreen()),
       );
     } else if (_authService.isRegularUser) {
+      // Jika suatu saat ada user yang sudah login, arahkan ke UserHomeScreen
+      // Tapi untuk welcome screen, biasanya user belum login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const UserHomeScreen()),
+        MaterialPageRoute(builder: (_) => const GuestHomeScreen()), // Ganti dengan UserHomeScreen jika ada
       );
     }
   }
@@ -45,7 +48,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
     
     Future.delayed(const Duration(milliseconds: 500), () {
-      _navigateToHome();
+      _navigateToHome(); // Gunakan fungsi navigasi
     });
   }
 
@@ -55,29 +58,49 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24.0), // Tambah .0 untuk konsistensi
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Spacer(flex: 2),
               
-              // Logo
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2563EB), Color(0xFF1E3A8A)],
+              // Logo dengan animasi subtle (opsional)
+              TweenAnimationBuilder(
+                tween: Tween<double>(begin: 0.8, end: 1.0),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeOutBack,
+                builder: (context, double scale, child) {
+                  return Transform.scale(
+                    scale: scale,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2563EB), Color(0xFF1E3A8A)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Center(
-                  child: Text(
-                    'SV',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
+                  child: const Center(
+                    child: Text(
+                      'SV',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -85,21 +108,36 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               
               const SizedBox(height: 24),
               
-              // Title
-              Text(
-                'Selamat Datang di',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-              ),
-              
-              Text(
-                'stayvue',
-                style: GoogleFonts.poppins(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1E3A8A),
+              // Title dengan fade in
+              TweenAnimationBuilder(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeIn,
+                builder: (context, double opacity, child) {
+                  return Opacity(
+                    opacity: opacity,
+                    child: child,
+                  );
+                },
+                child: Column(
+                  children: [
+                    Text(
+                      'Selamat Datang di',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      'stayvue',
+                      style: GoogleFonts.poppins(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1E3A8A),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               
@@ -117,32 +155,47 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               
               const Spacer(flex: 3),
               
-              // Buttons
+              // Buttons dengan animasi
               Column(
                 children: [
-                  // Login Member
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                  // Login Button
+                  TweenAnimationBuilder(
+                    tween: Tween<double>(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOut,
+                    builder: (context, double value, child) {
+                      return Transform.translate(
+                        offset: Offset(0, 20 * (1 - value)),
+                        child: Opacity(
+                          opacity: value,
+                          child: child,
                         ),
-                      ),
-                      child: Text(
-                        'Login',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                      );
+                    },
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                        child: Text(
+                          'Login',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -150,22 +203,35 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   
                   const SizedBox(height: 12),
                   
-                  // Skip / Guest Button
-                  TextButton(
-                    onPressed: _handleSkip,
-                    child: Text(
-                      'Lewati',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        decoration: TextDecoration.underline,
+                  // Skip Button
+                  TweenAnimationBuilder(
+                    tween: Tween<double>(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 700),
+                    curve: Curves.easeOut,
+                    builder: (context, double value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: child,
+                      );
+                    },
+                    child: TextButton(
+                      onPressed: _handleSkip,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey[600],
+                      ),
+                      child: Text(
+                        'Lewati',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
               
-              const Spacer(),
+              const SizedBox(height: 20),
             ],
           ),
         ),
