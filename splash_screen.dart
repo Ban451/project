@@ -27,7 +27,6 @@ class _SplashScreenState extends State<SplashScreen>
     
     _controller.forward();
     
-    // Pindah ke welcome screen setelah 2 detik
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         Navigator.pushReplacement(
@@ -61,7 +60,6 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo dengan gradient
               Container(
                 width: 120,
                 height: 120,
@@ -92,8 +90,6 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
               const SizedBox(height: 24),
-              
-              // Brand name
               Text(
                 'stayvue',
                 style: GoogleFonts.poppins(
@@ -104,8 +100,6 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              
-              // Tagline
               Text(
                 'Your Style Your Story',
                 style: GoogleFonts.poppins(
